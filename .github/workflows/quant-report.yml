@@ -1,0 +1,43 @@
+name: Run quant report
+
+on:
+  workflow_dispatch:
+    inputs:
+      symbol:
+        description: "Symbol to test (QQQ, SPY, BTC/USDT, EURUSD=X ...)"
+        required: true
+        default: "QQQ"
+      source:
+        description: "Data source"
+        required: true
+        default: "yfinance"
+        type: choice
+        options: [yfinance, ccxt, synthetic]
+      start:
+        description: "History start date"
+        required: false
+        default: "2005-01-01"
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-quant-lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run the test suite
+        run: python -m pytest tests -q
+      - name: Run the strategy search
+        run: python run.py --symbol "${{ inputs.symbol }}" --source "${{ inputs.source }}" --start "${{ inputs.start }}"
+      - name: Show the report in the job summary
+        run: cat reports/*.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quant-report
+          path: ai-quant-lab/reports/
