@@ -51,22 +51,49 @@ def load_yfinance(symbol: str, start: str, end: Optional[str] = None) -> pd.Data
     return _normalise(raw)
 
 
-def load_ccxt(symbol: str = "BTC/USDT", timeframe: str = "1d", exchange: str = "binance") -> pd.DataFrame:
+CCXT_EXCHANGES = ("kraken", "coinbase", "bitstamp", "binance")
+
+
+def load_ccxt(
+    symbol: str = "BTC/USDT",
+    timeframe: str = "1d",
+    exchange: Optional[str] = None,
+) -> pd.DataFrame:
+    """Daily crypto OHLCV from a public exchange endpoint.
+
+    Exchanges geo-block by region and change symbol naming (BTC/USDT vs BTC/USD),
+    so try several and take the first that answers rather than failing outright.
+    """
     import ccxt
 
-    ex = getattr(ccxt, exchange)({"enableRateLimit": True})
-    since = ex.parse8601("2017-01-01T00:00:00Z")
+    candidates = [exchange] if exchange else list(CCXT_EXCHANGES)
+    symbols = [symbol] if "/" in symbol else [f"{symbol}/USD", f"{symbol}/USDT"]
+    if symbol.endswith("/USDT"):
+        symbols.append(symbol.replace("/USDT", "/USD"))
+    errors: list[str] = []
     rows: list[list] = []
-    while True:
-        batch = ex.fetch_ohlcv(symbol, timeframe=timeframe, since=since, limit=1000)
-        if not batch:
-            break
-        rows.extend(batch)
-        since = batch[-1][0] + 1
-        if len(batch) < 1000:
+    for name in candidates:
+        for sym in symbols:
+            try:
+                ex = getattr(ccxt, name)({"enableRateLimit": True})
+                since = ex.parse8601("2017-01-01T00:00:00Z")
+                rows = []
+                while True:
+                    batch = ex.fetch_ohlcv(sym, timeframe=timeframe, since=since, limit=1000)
+                    if not batch:
+                        break
+                    rows.extend(batch)
+                    since = batch[-1][0] + 1
+                    if len(batch) < 1000:
+                        break
+                if rows:
+                    break
+            except Exception as exc:  # exchange unavailable here, or symbol unknown
+                errors.append(f"{name}:{sym}: {type(exc).__name__}")
+        if rows:
             break
     if not rows:
-        raise RuntimeError(f"ccxt returned no rows for {symbol}")
+        raise RuntimeError(f"no ccxt exchange returned rows for {symbol} ({'; '.join(errors[:6])})")
     df = pd.DataFrame(rows, columns=["ts", "open", "high", "low", "close", "volume"])
     df.index = pd.to_datetime(df.pop("ts"), unit="ms")
     return _normalise(df)

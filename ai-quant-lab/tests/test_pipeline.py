@@ -44,3 +44,27 @@ def test_buy_and_hold_is_always_reported_for_comparison():
     res = _small_run(7)
     assert res.buy_hold["n_bars"] > 0
     assert "sharpe" in res.buy_hold
+
+
+def test_best_overall_is_always_reported_even_when_nothing_survives():
+    """The headline backtest number must be visible next to its luck benchmark."""
+    res = _small_run(8)
+    best = res.best_overall
+    assert best["key"]
+    assert best["sr_benchmark"] > 0  # a search this size produces luck, by construction
+    assert 0.0 <= best["dsr"] <= 1.0
+    assert "Best-looking backtest" in report.to_markdown(res)
+
+
+def test_every_stage_is_reported_even_after_the_funnel_empties():
+    names = [s.name for s in _small_run(9).funnel]
+    assert names == [
+        "universe",
+        "in_sample_screen",
+        "plateau",
+        "cost_stress",
+        "out_of_sample",
+        "monte_carlo",
+        "deflated_sharpe",
+        "regime_consistency",
+    ]

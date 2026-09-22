@@ -56,6 +56,15 @@ def verdict(result: Result, control: Optional[Result] = None) -> str:
             f"- Buy and hold over the same history: **{_pct(bh['total_return'])} total return, "
             f"Sharpe {_num(bh['sharpe'])}, max drawdown {_pct(bh['max_drawdown'])}**."
         )
+    best = result.best_overall
+    if best:
+        lines.append(
+            f"- Best-looking backtest in the entire search: `{best['key']}`, in-sample Sharpe "
+            f"**{_num(best['is_sharpe'])}**, which falls to **{_num(best['oos_sharpe'])}** on the held-out data. "
+            f"A search of {result.n_candidates:,} strategies is expected to throw up a Sharpe of "
+            f"**{_num(best['sr_benchmark'])}** from pure luck, and its deflated Sharpe - the probability the "
+            f"edge is real - is **{best['dsr']:.3f}**."
+        )
     if result.pbo:
         pbo = result.pbo.get("pbo", float("nan"))
         lines.append(

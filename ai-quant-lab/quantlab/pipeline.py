@@ -67,6 +67,7 @@ class Result:
     funnel: List[FunnelStage] = field(default_factory=list)
     survivors: List[Dict] = field(default_factory=list)
     pbo: Dict[str, float] = field(default_factory=dict)
+    best_overall: Dict[str, float] = field(default_factory=dict)
     walk_forward: Dict[str, float] = field(default_factory=dict)
     buy_hold: Dict[str, float] = field(default_factory=dict)
     notes: List[str] = field(default_factory=list)
@@ -115,6 +116,23 @@ def run_pipeline(
     alive = np.arange(len(cands))
     _stage(result, "universe", f"all parameter combinations across {len(set(c.family for c in cands))} strategy families", len(cands), len(cands))
 
+    # The single best-looking backtest in the whole search, kept aside whether or
+    # not it survives. This is the number a marketing video would put on screen,
+    # so it is the number worth comparing against the luck benchmark.
+    best_i = int(np.argmax(sr_is))
+    best_full = strategy_returns(positions[:, best_i], br, costs)
+    best_oos = strategy_returns(positions[oos_slice][:, best_i], br[oos_slice], costs)
+    best_dsr = stats.deflated_sharpe(best_full, n_trials=len(cands), periods=periods)
+    result.best_overall = {
+        "key": cands[best_i].key,
+        "is_sharpe": float(sr_is[best_i]),
+        "oos_sharpe": float(stats.sharpe_ratio(best_oos, periods)),
+        "dsr": best_dsr["dsr"],
+        "sr_benchmark": best_dsr["sr_benchmark"],
+        "max_drawdown": float(dd_is[best_i]),
+        "n_trades": float(trades_is[best_i]),
+    }
+
     keep = (
         (sr_is[alive] >= thresholds.min_is_sharpe)
         & (trades_is[alive] >= thresholds.min_trades)
@@ -144,23 +162,23 @@ def run_pipeline(
     _stage(result, "plateau", f"neighbouring parameters keep >= {thresholds.plateau_ratio:.0%} of the Sharpe (no lucky spikes)", before, len(alive))
     log(f"[4/9] plateau test: {len(alive):,} survive")
 
+    before = len(alive)
     if len(alive):
         stressed = strategy_returns(positions[is_slice][:, alive], br[is_slice], costs.scaled(thresholds.cost_stress))
-        keep = sharpe_all(stressed, periods) >= thresholds.min_stressed_sharpe
-        before, alive = len(alive), alive[keep]
-        _stage(result, "cost_stress", f"still works at {thresholds.cost_stress:g}x trading costs", before, len(alive))
-        log(f"[5/9] cost stress: {len(alive):,} survive")
+        alive = alive[sharpe_all(stressed, periods) >= thresholds.min_stressed_sharpe]
+    _stage(result, "cost_stress", f"still works at {thresholds.cost_stress:g}x trading costs", before, len(alive))
+    log(f"[5/9] cost stress: {len(alive):,} survive")
 
     sr_oos = np.zeros(len(cands))
+    before = len(alive)
     if len(alive):
         net_oos = strategy_returns(positions[oos_slice][:, alive], br[oos_slice], costs)
         sr_oos_alive = sharpe_all(net_oos, periods)
         sr_oos[alive] = sr_oos_alive
         ratio = sr_oos_alive / np.maximum(sr_is[alive], 1e-9)
-        keep = (sr_oos_alive >= thresholds.min_oos_sharpe) & (ratio >= thresholds.min_oos_is_ratio)
-        before, alive = len(alive), alive[keep]
-        _stage(result, "out_of_sample", f"held-out final {oos_fraction:.0%} of history: Sharpe >= {thresholds.min_oos_sharpe} and >= {thresholds.min_oos_is_ratio:.0%} of in-sample", before, len(alive))
-        log(f"[6/9] out-of-sample: {len(alive):,} survive")
+        alive = alive[(sr_oos_alive >= thresholds.min_oos_sharpe) & (ratio >= thresholds.min_oos_is_ratio)]
+    _stage(result, "out_of_sample", f"held-out final {oos_fraction:.0%} of history: Sharpe >= {thresholds.min_oos_sharpe} and >= {thresholds.min_oos_is_ratio:.0%} of in-sample", before, len(alive))
+    log(f"[6/9] out-of-sample: {len(alive):,} survive")
 
     # Walk-forward, applied to the selection process itself, not one strategy.
     windows = walk_forward_windows(n)
