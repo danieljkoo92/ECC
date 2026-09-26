@@ -5,7 +5,7 @@ description: Reference map of ~390 from-scratch tutorials (codecrafters-io/build
 
 # Build Your Own X — reference map
 
-Source: github.com/codecrafters-io/build-your-own-x. Full tutorial list with links is in `references/catalog.md`, grouped by `#### Build your own <Thing>`.
+Source: github.com/codecrafters-io/build-your-own-x. Full tutorial list with links is in `references/catalog.md`, grouped by `## Build your own <Thing>`.
 
 ## When to use
 - Planning or building any app piece (storage, search, messaging, bots, payments ledger, web server, UI framework).
@@ -13,7 +13,7 @@ Source: github.com/codecrafters-io/build-your-own-x. Full tutorial list with lin
 - Deciding build-vs-buy: if a tutorial exists, the piece is well understood; still prefer a proven service for anything shipping to customers.
 
 ## How it works
-1. Match the task to one or more categories in `references/catalog.md` (grep the `####` headings).
+1. Match the task to one or more categories in `references/catalog.md` (grep the `##` headings).
 2. Pick 1–3 tutorials in the stack being used (JavaScript/TypeScript/Python first).
 3. Use them as design background. Claude does the building. Never hand Daniel code or ask him to follow a tutorial himself.
 4. When explaining, give steps only, no theory, and mention at most one tutorial link.
