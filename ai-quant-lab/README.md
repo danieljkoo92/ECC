@@ -66,10 +66,36 @@ Reports are written to `reports/<symbol>.md` and `reports/<symbol>.json`.
 No API keys, no paid data, no broker connection. Data comes from Yahoo Finance
 (`yfinance`) and public exchange endpoints (`ccxt`).
 
+## NBA betting systems
+
+The same funnel, pointed at sports betting. `quantlab/nba/` generates about
+2,100 betting systems - the angles betting services sell: fade or follow line
+moves, back rested teams against tired ones, ride or fade winning streaks and
+hot against-the-spread runs, home underdogs, unders on high totals - and
+settles every bet at the real closing line, with spreads and totals at -110.
+
+```bash
+python run_nba.py              # every season 2007-08 to 2022-23, downloaded once and cached
+python run_nba.py --synthetic  # offline demo on a fake league
+```
+
+The stages are the same ones, translated to bets: clear the bookmaker's margin
+in-sample, survive a plateau test, stay profitable at -115, hold up on seasons
+never used for selection, survive bootstrap and the deflated Sharpe correction,
+and win in most seasons. The control run redraws every result from a world
+where the closing lines are exactly right, so it shows what the search finds
+when no edge exists at all.
+
+Scores and closing lines come from the free public archive at
+sportsbookreviewsonline.com. Every feature a system uses - rest days, streaks,
+recent record against the spread, line movement - is built only from games
+finished before tip-off.
+
 ## Running it without installing anything
 
-Use the **Run quant report** action in the GitHub Actions tab: choose a symbol,
-press the button, and download the report when it finishes.
+Use the **Run quant report** action in the GitHub Actions tab: choose
+`markets` and a symbol, or `nba`, press the button, and read the report in the
+run summary when it finishes.
 
 ## Reading the output
 

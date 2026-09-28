@@ -3,18 +3,24 @@ name: Run quant report
 on:
   workflow_dispatch:
     inputs:
-      symbol:
-        description: "Symbol to test (QQQ, SPY, BTC/USDT, EURUSD=X ...)"
+      report:
+        description: "What to test"
         required: true
+        default: "markets"
+        type: choice
+        options: [markets, nba]
+      symbol:
+        description: "Markets only: symbol to test (QQQ, SPY, BTC/USDT, EURUSD=X ...)"
+        required: false
         default: "QQQ"
       source:
-        description: "Data source"
-        required: true
+        description: "Markets only: data source"
+        required: false
         default: "yfinance"
         type: choice
         options: [yfinance, ccxt, synthetic]
       start:
-        description: "History start date"
+        description: "Markets only: history start date"
         required: false
         default: "2005-01-01"
 
@@ -33,8 +39,16 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run the test suite
         run: python -m pytest tests -q
-      - name: Run the strategy search
-        run: python run.py --symbol "${{ inputs.symbol }}" --source "${{ inputs.source }}" --start "${{ inputs.start }}"
+      - name: Run the market strategy search
+        if: inputs.report == 'markets'
+        env:
+          SYMBOL: ${{ inputs.symbol }}
+          SOURCE: ${{ inputs.source }}
+          START: ${{ inputs.start }}
+        run: python run.py --symbol "$SYMBOL" --source "$SOURCE" --start "$START"
+      - name: Run the NBA betting system search
+        if: inputs.report == 'nba'
+        run: python run_nba.py
       - name: Show the report in the job summary
         run: cat reports/*.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
