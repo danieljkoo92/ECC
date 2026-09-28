@@ -91,6 +91,51 @@ sportsbookreviewsonline.com. Every feature a system uses - rest days, streaks,
 recent record against the spread, line movement - is built only from games
 finished before tip-off.
 
+## Use it from Claude Desktop
+
+ai-quant-lab ships as an MCP server, so Claude can run both searches for you
+from a normal chat. It adds three tools: `test_trading_strategies`,
+`test_nba_betting_systems` and `get_report`.
+
+**Windows**: open PowerShell (Start, type `PowerShell`, press Enter), paste
+this line and press Enter:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/danieljkoo92/ECC/main/ai-quant-lab/install/claude-desktop-windows.ps1 | iex"
+```
+
+It installs [uv](https://docs.astral.sh/uv/) if needed (uv brings its own
+Python), downloads ai-quant-lab, runs a self-test, and adds the server to
+Claude's config. Every existing server and setting in that file is kept, and
+a timestamped backup is written next to it first. Then quit Claude from the
+tray icon, reopen it, and ask something like:
+
+- "Test NBA betting systems with ai-quant-lab"
+- "Is there any trading strategy that works on NQ=F? Use ai-quant-lab"
+- "Someone is selling a Bitcoin bot. Check BTC-USD with ai-quant-lab"
+
+**Mac or any other MCP client**: install uv, then add this to the client's
+MCP server config (for Claude Desktop, Settings, Developer, Edit Config):
+
+```json
+{
+  "mcpServers": {
+    "ai-quant-lab": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "https://github.com/danieljkoo92/ECC/archive/refs/heads/main.zip#subdirectory=ai-quant-lab",
+        "quantlab-mcp"
+      ]
+    }
+  }
+}
+```
+
+Downloaded market data and NBA seasons are cached in `~/.ai-quant-lab/cache`.
+A first run downloads data and can take a minute or two. If a call comes back
+with a job id instead of a report, Claude collects it with `get_report`.
+
 ## Running it without installing anything
 
 Use the **Run quant report** action in the GitHub Actions tab: choose

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-quant-lab"
+version = "0.2.0"
+description = "Generate thousands of trading strategies and NBA betting systems, then test whether any of them are real."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "lxml>=5.0",
+    "yfinance>=0.2.40",
+    "mcp>=2.2,<3",
+]
+
+[project.optional-dependencies]
+crypto = ["ccxt>=4.2"]
+test = ["pytest>=7.4"]
+
+[project.scripts]
+quantlab-mcp = "quantlab.mcp_server:main"
+
+[tool.setuptools.packages.find]
+include = ["quantlab*"]
