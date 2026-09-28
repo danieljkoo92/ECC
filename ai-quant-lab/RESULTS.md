@@ -59,3 +59,57 @@ Reproduce any row with, for example:
 ```bash
 python run.py --symbol NQ=F --start 2005-01-01
 ```
+
+---
+
+# NBA betting systems
+
+2,120 betting systems over **19,641 NBA games, 2007-08 to 2022-23** (2022-23
+partial), every bet settled at the real closing line with spreads and totals
+at -110. Seasons 2007-08 to 2017-18 were used for selection; 2018-19 to 2022-23
+were held out. Run on 2026-09-28 with `python run_nba.py`.
+
+## The starting line
+
+Betting every game on any single side returns **-5.5% to -3.4% per bet**.
+That is the bookmaker's margin, and every system starts there.
+
+## The funnel
+
+| Stage | Left | Killed |
+|---|---:|---:|
+| All systems | 2,120 | 0 |
+| In-sample ROI of at least +3% over 150+ bets | 53 | 2,067 |
+| Plateau (neighbouring settings work too) | 28 | 25 |
+| Still profitable at -115 | 28 | 0 |
+| Profitable on the five held-out seasons | 9 | 19 |
+| Bootstrap: 5th-percentile held-out ROI positive | **0** | 9 |
+| Deflated Sharpe >= 0.95 | 0 | 0 |
+| Profitable in 60% of seasons | 0 | 0 |
+
+## Best system vs luck
+
+- Best-looking system in the search: back **away underdogs on the moneyline
+  after five straight losses, early in the season** — **+11.9% per bet** on
+  172 in-sample bets.
+- On the held-out seasons it never saw: **-17.7% per bet**.
+- Probability its edge is real after correcting for 2,120 systems: **0.001**.
+- The control, where every line is exactly right and no system can win, still
+  produced a best in-sample system at **+10.4% per bet**. The real winner beat
+  pure luck by about one and a half points.
+
+## Running the process for real
+
+Each season, bet the system with the best record over every season before it:
+**-43.8 units over 343 bets (-12.8% per bet)** from 2010-11 to 2022-23. At
+$100 a bet that is **-$4,380**. The process switched systems nine times in
+thirteen seasons — rest spots, streaks, line moves, spread bands — which is
+what re-learning noise every season looks like.
+
+## What this does and does not prove
+
+It does not prove no one beats NBA betting. It proves that the angles betting
+services sell — streaks, rest spots, line-move follows and fades, home dogs,
+total bands — searched at scale and tested honestly, do not beat the closing
+line after the bookmaker's margin. A real edge would have to come from
+information the closing line does not already contain.
