@@ -1,0 +1,57 @@
+name: Run quant report
+
+on:
+  workflow_dispatch:
+    inputs:
+      report:
+        description: "What to test"
+        required: true
+        default: "markets"
+        type: choice
+        options: [markets, nba]
+      symbol:
+        description: "Markets only: symbol to test (QQQ, SPY, BTC/USDT, EURUSD=X ...)"
+        required: false
+        default: "QQQ"
+      source:
+        description: "Markets only: data source"
+        required: false
+        default: "yfinance"
+        type: choice
+        options: [yfinance, ccxt, synthetic]
+      start:
+        description: "Markets only: history start date"
+        required: false
+        default: "2005-01-01"
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-quant-lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run the test suite
+        run: python -m pytest tests -q
+      - name: Run the market strategy search
+        if: inputs.report == 'markets'
+        env:
+          SYMBOL: ${{ inputs.symbol }}
+          SOURCE: ${{ inputs.source }}
+          START: ${{ inputs.start }}
+        run: python run.py --symbol "$SYMBOL" --source "$SOURCE" --start "$START"
+      - name: Run the NBA betting system search
+        if: inputs.report == 'nba'
+        run: python run_nba.py
+      - name: Show the report in the job summary
+        run: cat reports/*.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quant-report
+          path: ai-quant-lab/reports/
